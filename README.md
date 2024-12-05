@@ -89,13 +89,3 @@ The **Student Prediction System** is a Java-based application that predicts whet
 - **Testing and Validation**:
   - Add test cases for edge scenarios to validate the robustness of the prediction system.
 
----
-
-#### **Contributors**
-- **Your Name** (Developer)
-- Feedback and contributions are welcome! Please feel free to reach out or submit issues/feature requests.
-
----
-
-#### **License**
-This project is licensed under the **MIT License**.
