@@ -1,87 +1,69 @@
 import java.util.*;
 import java.util.concurrent.*;
 
+// This class builds a random forest from multiple decision trees.
 public class RandomForest {
     private List<DecisionTree> trees;
     private int numTrees;
     private int maxFeatures;
     private int numTotalFeatures;
-    private Random random;
+    private Random rand;
 
-    public RandomForest(int numTrees, int maxFeatures, int numTotalFeatures) {
+    public RandomForest(int numTrees, int maxFeatures, int totalF) {
         this.numTrees = numTrees;
         this.maxFeatures = maxFeatures;
-        this.numTotalFeatures = numTotalFeatures;
+        this.numTotalFeatures = totalF;
         this.trees = Collections.synchronizedList(new ArrayList<>());
-        this.random = new Random();
+        this.rand = new Random();
     }
 
-    public void train(List<DataPoint> data) {
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
-        for (int i = 0; i < numTrees; i++) {
-            executor.execute(() -> {
-                List<DataPoint> bootstrapSample = bootstrapSample(data);
-
-                DecisionTree tree = new DecisionTree(maxFeatures, numTotalFeatures);
-                tree.train(bootstrapSample);
-                trees.add(tree);
+    public void train(List<Node> data) {
+        ExecutorService exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        for (int i=0;i<numTrees;i++) {
+            exec.execute(() -> {
+                List<Node> sample=bootstrapSample(data);
+                DecisionTree dt=new DecisionTree(maxFeatures,numTotalFeatures);
+                dt.train(sample);
+                trees.add(dt);
             });
         }
-
-        executor.shutdown();
+        exec.shutdown();
         try {
-            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            exec.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+        } catch (InterruptedException e){}
     }
 
-    public int predict(double[] features) {
-        int[] votes = new int[2]; // Assuming binary classification
-        for (DecisionTree tree : trees) {
-            int prediction = tree.predict(features);
-            votes[prediction]++;
+    public int predict(double[] feats) {
+        int[] votes=new int[2];
+        for (DecisionTree t:trees) {
+            int p=t.predict(feats);
+            votes[p]++;
         }
-        return votes[0] > votes[1] ? 0 : 1;
+        return votes[0]>votes[1]?0:1;
     }
 
-    public double evaluate(List<DataPoint> testData) {
-        int correct = 0;
-        for (DataPoint dp : testData) {
-            int prediction = predict(dp.features);
-            if (prediction == dp.label) {
-                correct++;
-            }
+    public double evaluate(List<Node> test) {
+        int correct=0;
+        for (Node n:test) {
+            int pred=predict(nodeToArr(n));
+            if (pred==n.getLabel()) correct++;
         }
-        return (double) correct / testData.size();
+        return (double)correct/test.size();
     }
 
-    public double[] getFeatureImportances(int numFeatures) {
-        double[] importances = new double[numFeatures];
-        for (DecisionTree tree : trees) {
-            double[] treeImportances = tree.getFeatureImportances();
-            for (int i = 0; i < numFeatures; i++) {
-                importances[i] += treeImportances[i];
-            }
+    private List<Node> bootstrapSample(List<Node> data) {
+        List<Node> samp=new ArrayList<>();
+        int N=data.size();
+        for (int i=0;i<N;i++) {
+            int idx=rand.nextInt(N);
+            samp.add(data.get(idx));
         }
-        // Normalize importances
-        double total = Arrays.stream(importances).sum();
-        if (total > 0) {
-            for (int i = 0; i < numFeatures; i++) {
-                importances[i] /= total;
-            }
-        }
-        return importances;
+        return samp;
     }
 
-    private List<DataPoint> bootstrapSample(List<DataPoint> data) {
-        List<DataPoint> sample = new ArrayList<>();
-        int n = data.size();
-        for (int i = 0; i < n; i++) {
-            int index = random.nextInt(n);
-            sample.add(data.get(index));
-        }
-        return sample;
+    private double[] nodeToArr(Node n) {
+        double[] arr=new double[n.getNumFeatures()];
+        for (int i=0;i<n.getNumFeatures();i++) arr[i]=n.getFeature(i);
+        return arr;
     }
 }
