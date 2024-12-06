@@ -2,73 +2,68 @@ import java.util.Collections;
 import java.util.List;
 import java.awt.Color;
 
-
+// This is the controller. It loads data, trains model, evaluates accuracy.
+// It also connects the view and model.
 public class Main {
     public static void main(String[] args) {
-        // Load and train the Random Forest
-        List<DataPoint> data = DataLoader.loadData("src/student_data.csv");
-        RandomForest randomForest = trainModel(data);
+        // Load data
+        DataLoader.LoadResult loadRes = DataLoader.loadData("src\\main\\java\\student_data.csv");
+        List<Node> data = loadRes.data;
 
-        // Initialize the FeedbackAnalyzer
-        FeedbackAnalyzer feedbackAnalyzer = new FeedbackAnalyzer(data);
+        // Print how many lines were skipped
+        System.out.println("Lines skipped: " + loadRes.linesSkipped);
 
-        // Initialize MainView
-        MainView mainView = new MainView();
-
-        // Welcome screen actions
-        mainView.addProceedButtonListener(e -> {
-            String userName = mainView.getNameInput();
-            if (userName.isEmpty()) {
-                // Display an error message on the welcome screen
-                mainView.setWelcomeMessage("Please enter your name.", Color.RED);
-            } else {
-                // Display a friendly welcome message and move to the prediction screen
-                mainView.setWelcomeMessage("Welcome, " + userName + "!", Color.BLUE);
-                mainView.showCard("Prediction");
-            }
-        });
-
-        // Prediction screen actions
-        mainView.addPredictButtonListener(e -> {
-            try {
-                double[] input = mainView.getPredictionInput();
-                int prediction = randomForest.predict(input);
-                String result = prediction == 1 ? "Pass" : "Fail";
-                mainView.setPredictionResult(result);
-
-                // Generate and display feedback
-                List<String> suggestions = feedbackAnalyzer.getSuggestions(input);
-                StringBuilder feedbackMessage = new StringBuilder("Suggestions for Improvement:\n");
-                for (String suggestion : suggestions) {
-                    feedbackMessage.append("- ").append(suggestion).append("\n");
-                }
-                mainView.setFeedbackText(feedbackMessage.toString());
-
-                // Show feedback panel
-                mainView.showCard("Feedback");
-            } catch (NumberFormatException ex) {
-                mainView.setFeedbackText("Please ensure all numerical inputs are within the valid ranges.");
-                mainView.showCard("Feedback");
-            }
-        });
-
-        // Feedback screen actions
-        mainView.addBackButtonListener(e -> mainView.showCard("Prediction"));
-    }
-
-    private static RandomForest trainModel(List<DataPoint> data) {
-        // Shuffle and split data
+        // Shuffle and split data into train and test
         Collections.shuffle(data);
-        int trainSize = (int) (data.size() * 0.8);
-        List<DataPoint> trainingData = data.subList(0, trainSize);
+        int split=(int)(data.size()*0.8);
+        List<Node> trainData=data.subList(0,split);
+        List<Node> testData=data.subList(split,data.size());
 
-        // Train the Random Forest
-        int numFeatures = trainingData.get(0).features.length;
-        int maxFeatures = (int) Math.sqrt(numFeatures);
-        RandomForest randomForest = new RandomForest(100, maxFeatures, numFeatures);
-        randomForest.train(trainingData);
+        // Train model
+        int nf = trainData.get(0).getNumFeatures();
+        int mf = (int)Math.sqrt(nf);
+        RandomForest rf = new RandomForest(100,mf,nf);
+        rf.train(trainData);
 
-        System.out.println("Model training completed!");
-        return randomForest;
+        // Evaluate model accuracy
+        double accuracy = rf.evaluate(testData);
+        System.out.println("Model accuracy: " + (accuracy*100)+"%");
+
+        // Setup feedback
+        FeedbackAnalyzer fa=new FeedbackAnalyzer(data);
+
+        // Setup View
+        MainView view=new MainView();
+
+        // Controller action for proceed
+        view.addProceedButtonListener(e->{
+            String user=view.getNameInput();
+            if (user.isEmpty()) {
+                view.setWelcomeMessage("Please enter your name.",Color.RED);
+            } else {
+                view.setWelcomeMessage("Welcome, "+user+"!",Color.BLUE);
+                view.showCard("Prediction");
+            }
+        });
+
+        // Controller action for predict
+        view.addPredictButtonListener(e->{
+            try {
+                double[] input=view.getPredictionInput();
+                int pred=rf.predict(input);
+                String res=pred==1?"Pass":"Fail";
+                view.setPredictionResult(res);
+                List<String> sugs=fa.getSuggestions(input,res);
+                StringBuilder sb=new StringBuilder();
+                for (String s:sugs) sb.append(s).append("\n");
+                view.setFeedbackText(sb.toString());
+                view.showCard("Feedback");
+            } catch(NumberFormatException ex) {
+                view.setFeedbackText("Please enter valid numeric inputs.");
+                view.showCard("Feedback");
+            }
+        });
+
+        view.addBackButtonListener(e->view.showCard("Prediction"));
     }
 }
