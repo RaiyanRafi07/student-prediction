@@ -1,9 +1,7 @@
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import javax.swing.*;
 
-// This class builds the GUI and provides methods to show results and get user inputs.
-// It's the VIEW in MVC.
 public class MainView {
     JFrame frame;
     private JPanel mainPanel;
@@ -24,9 +22,8 @@ public class MainView {
 
     JTextArea feedbackArea;
     private JButton backButton;
-    private JButton exportButton; // New Export Button
+    private JButton exportButton;
 
-    // New JTextArea for Updates
     private JTextArea updatesArea;
 
     public MainView() {
@@ -43,7 +40,9 @@ public class MainView {
 
         frame = new JFrame("Student Prediction System");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 900);
+        frame.setSize(600, 900); // Adjusted size for layout
+        frame.setResizable(false);
+        frame.setLocationRelativeTo(null); // Center the frame on the screen
 
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
@@ -63,15 +62,13 @@ public class MainView {
     private void createWelcomePanel() {
         welcomePanel = new JPanel(new BorderLayout(10, 10));
         welcomePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        // Mission Statement and Updates combined in one JTextArea
+    
+        // Updates section
         updatesArea = new JTextArea();
         updatesArea.setEditable(false);
         updatesArea.setLineWrap(true);
         updatesArea.setWrapStyleWord(true);
         updatesArea.setFont(new Font("SansSerif", Font.PLAIN, 14));
-
-        // Setting the initial text for mission statement and updates
         updatesArea.setText(
             "Mission Statement:\n" +
             "Our model aims to predict whether a student will pass or fail based on various factors.\n\n" +
@@ -79,67 +76,52 @@ public class MainView {
             "- Added GUI-based prediction input.\n" +
             "- Introduced export functionality for results and suggestions."
         );
-
+    
         JScrollPane updatesScroll = new JScrollPane(updatesArea);
-        updatesScroll.setPreferredSize(new Dimension(550, 150));
-
+        updatesScroll.setPreferredSize(new Dimension(550, 200)); // Larger box for updates
+    
         JPanel updatesPanel = new JPanel(new BorderLayout());
         updatesPanel.add(updatesScroll, BorderLayout.CENTER);
         updatesPanel.setBorder(BorderFactory.createTitledBorder("Mission & Updates"));
-
-        JLabel missionLabel = new JLabel(""); // Removed redundant mission label
-
-        // Input Panel (Name Input and Proceed Button)
-        JPanel inputPanel = new JPanel(new GridLayout(3, 1, 10, 10));
-        inputPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
+    
+        // Input section
+        JPanel inputPanel = new JPanel();
+        inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS)); // Aligns components vertically
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(20, 100, 20, 100)); // Adds horizontal centering
+    
         JLabel nameLabel = new JLabel("Enter your name:");
-        nameLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
+        nameLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT); // Centers the label horizontally
+    
         nameField = new JTextField();
+        nameField.setMaximumSize(new Dimension(300, 40)); // Ensures consistent size
+        nameField.setAlignmentX(Component.CENTER_ALIGNMENT); // Centers the text field horizontally
+    
         proceedButton = new JButton("Proceed to Prediction");
-
-        // Welcome message (initially empty)
-        JLabel welcomeMessage = new JLabel("");
-        welcomeMessage.setHorizontalAlignment(SwingConstants.CENTER);
-
+        proceedButton.setMaximumSize(new Dimension(300, 50)); // Ensures consistent size
+        proceedButton.setAlignmentX(Component.CENTER_ALIGNMENT); // Centers the button horizontally
+    
+        inputPanel.add(Box.createVerticalGlue()); // Adds flexible space at the top
         inputPanel.add(nameLabel);
+        inputPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Adds fixed space between components
         inputPanel.add(nameField);
+        inputPanel.add(Box.createRigidArea(new Dimension(0, 20))); // Adds fixed space
         inputPanel.add(proceedButton);
-
-        // Add components to the welcome panel
-        welcomePanel.add(updatesPanel, BorderLayout.NORTH); // Added updates section at the top
+        inputPanel.add(Box.createVerticalGlue()); // Adds flexible space at the bottom
+    
+        welcomePanel.add(updatesPanel, BorderLayout.NORTH);
         welcomePanel.add(inputPanel, BorderLayout.CENTER);
-        welcomePanel.add(welcomeMessage, BorderLayout.SOUTH);
-
-        // Add action listener for the Proceed Button
-        proceedButton.addActionListener(e -> {
-            String userName = nameField.getText().trim();
-            if (userName.isEmpty()) {
-                welcomeMessage.setText("Please enter your name.");
-                welcomeMessage.setForeground(Color.RED); // Highlight error message in red
-            } else {
-                welcomeMessage.setText("Welcome, " + userName + "!");
-                welcomeMessage.setForeground(Color.BLUE); // Set a friendly color for the message
-                showCard("Prediction"); // Switch to the prediction panel
-            }
-        });
     }
+    
+    
 
     public void setWelcomeMessage(String message, Color color) {
-        // Method to set the welcome message text and color
-        Component[] components = welcomePanel.getComponents();
-        for (Component component : components) {
-            if (component instanceof JLabel) {
-                JLabel label = (JLabel) component;
-                if (!label.getText().contains("Mission")) { // Skip the mission and updates section
-                    label.setText(message);
-                    label.setForeground(color);
-                    break;
-                }
-            }
-        }
-    }
+        JPanel inputPanel = (JPanel) welcomePanel.getComponent(1); // Assuming it's at position 1
+        JLabel messageLabel = new JLabel(message);
+        messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        messageLabel.setForeground(color);
+        inputPanel.add(messageLabel); 
+     }
 
     private void createPredictionPanel() {
         predictionPanel = new JPanel(new GridLayout(22, 2, 10, 10));
@@ -147,11 +129,17 @@ public class MainView {
 
         // Input fields
         hoursStudied = new JTextField();
+        hoursStudied.setPreferredSize(new Dimension(300, 40));
         attendance = new JTextField();
+        attendance.setPreferredSize(new Dimension(300, 40));
         sleepHours = new JTextField();
+        sleepHours.setPreferredSize(new Dimension(300, 40));
         previousScores = new JTextField();
+        previousScores.setPreferredSize(new Dimension(300, 40));
         tutoringSessions = new JTextField();
+        tutoringSessions.setPreferredSize(new Dimension(300, 40));
         physicalActivity = new JTextField();
+        physicalActivity.setPreferredSize(new Dimension(300, 40));
 
         parentalInvolvement = new JComboBox<>(new String[]{"High", "Medium", "Low"});
         accessToResources = new JComboBox<>(new String[]{"High", "Medium", "Low"});
@@ -171,10 +159,9 @@ public class MainView {
         predictionResultLabel = new JLabel("Result: ");
         predictionResultLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
 
-        // Add components to panel
-        predictionPanel.add(new JLabel("Hours Studied (0-44):"));
+        predictionPanel.add(new JLabel("Hours Studied per week:"));
         predictionPanel.add(hoursStudied);
-        predictionPanel.add(new JLabel("Attendance (60-100):"));
+        predictionPanel.add(new JLabel("Percentage of class attended:"));
         predictionPanel.add(attendance);
         predictionPanel.add(new JLabel("Parental Involvement:"));
         predictionPanel.add(parentalInvolvement);
@@ -182,15 +169,15 @@ public class MainView {
         predictionPanel.add(accessToResources);
         predictionPanel.add(new JLabel("Extracurricular Activities:"));
         predictionPanel.add(extracurricularActivities);
-        predictionPanel.add(new JLabel("Sleep Hours (4-10):"));
+        predictionPanel.add(new JLabel("Sleep Hours per night:"));
         predictionPanel.add(sleepHours);
-        predictionPanel.add(new JLabel("Previous Scores (50-100):"));
+        predictionPanel.add(new JLabel("Previous Exam Score:"));
         predictionPanel.add(previousScores);
         predictionPanel.add(new JLabel("Motivation Level:"));
         predictionPanel.add(motivationLevel);
         predictionPanel.add(new JLabel("Internet Access:"));
         predictionPanel.add(internetAccess);
-        predictionPanel.add(new JLabel("Tutoring Sessions (0-8):"));
+        predictionPanel.add(new JLabel("Tutoring Sessions per month:"));
         predictionPanel.add(tutoringSessions);
         predictionPanel.add(new JLabel("Family Income:"));
         predictionPanel.add(familyIncome);
@@ -200,7 +187,7 @@ public class MainView {
         predictionPanel.add(schoolType);
         predictionPanel.add(new JLabel("Peer Influence:"));
         predictionPanel.add(peerInfluence);
-        predictionPanel.add(new JLabel("Physical Activity (0-6):"));
+        predictionPanel.add(new JLabel("Hours of Physical Activity Per Week:"));
         predictionPanel.add(physicalActivity);
         predictionPanel.add(new JLabel("Learning Disabilities:"));
         predictionPanel.add(learningDisabilities);
@@ -223,12 +210,9 @@ public class MainView {
         feedbackArea.setEditable(false);
         feedbackArea.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
-        // New Export Button
         exportButton = new JButton("Export Results");
-
         backButton = new JButton("Back to Prediction");
 
-        // Panel for buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         buttonPanel.add(exportButton);
         buttonPanel.add(backButton);
@@ -257,13 +241,12 @@ public class MainView {
         backButton.addActionListener(listener);
     }
 
-    // New method to add listener for Export Button
     public void addExportButtonListener(ActionListener listener) {
         exportButton.addActionListener(listener);
     }
 
     public double[] getPredictionInput() throws NumberFormatException {
-        double[] input = new double[19]; // Updated to 19 features (0-18)
+        double[] input = new double[19];
         input[0] = Double.parseDouble(hoursStudied.getText());
         input[1] = Double.parseDouble(attendance.getText());
         input[2] = parentalInvolvement.getSelectedIndex();
